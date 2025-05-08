@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+# Clean the environment
+module purge
+
+# Set working directory to home directory
+cd "${HOME}"
+
+# Ensure that the user's configured login shell is used
+export SHELL="$(getent passwd $USER | cut -d: -f7)"
+
+#
+# Launch Xfce Window Manager and Panel
+#
+
+(
+  export SEND_256_COLORS_TO_REMOTE=1
+  export XDG_CONFIG_HOME="<%= session.staged_root.join("config") %>"
+  export XDG_DATA_HOME="<%= session.staged_root.join("share") %>"
+  export XDG_CACHE_HOME="$(mktemp -d)"
+  export $(dbus-launch)
+
+  module restore
+  set -x
+  xfwm4 --compositor=off --daemon --sm-client-disable
+  xsetroot -solid "#D3D3D3"
+  xfsettingsd --sm-client-disable
+  xfce4-panel --sm-client-disable
+) &
+
+# Force module path
+export MODULEPATH=/mnt/shared/easybuild/modules/all:/mnt/shared/modulefiles:/etc/scl/modulefiles:/opt/ohpc/pub/modulefiles
+
+#
+# Start MATLAB
+#
+
+# Double check display settings
+echo "DISPLAY:"
+echo $DISPLAY
+
+# Load the required environment
+module load <%= context.version %>
+module load proxy
+
+# Load custom env file
+<%- if context.custom_env -%>
+echo "Running Custom User Env Script"
+echo <%= context.custom_env -%>
+source <%= context.custom_env -%>
+<%- end -%>
+
+# Launch MATLAB
+<%- if context.bind_gpu.include?("A40") -%>
+module load VirtualGL <%= context.cuda_version -%> 
+
+module list
+set -x
+vglrun +tr matlab -desktop -nosoftwareopengl
+<%- else -%>
+module list
+set -x
+matlab -desktop
+<%- end -%>
