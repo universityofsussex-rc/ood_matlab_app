@@ -65,4 +65,5 @@ attributes:
     help: "This defines the version of MATLAB you wish to load."
     options:
       - ["R2022b", "MATLAB/R2022b"]
+      - ["R2022b-GCCcore-10.3.0", "MATLAB/R2022b-GCCcore-10.3.0"]
       - ["R2018b", "MATLAB/R2018b"]
